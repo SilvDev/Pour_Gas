@@ -1,0 +1,7 @@
+"Phrases"
+{
+	"PourGas_Pickup"
+	{
+		"zho"			"按下裝彈鍵（R）或滾輪鍵（mouse 3）可將汽油倒入地面."
+	}
+}

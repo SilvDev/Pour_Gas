@@ -1,0 +1,7 @@
+"Phrases"
+{
+	"PourGas_Pickup"
+	{
+		"chi"			"按下装弹键（R）或滚轮键（mouse 3）可将汽油倒入地面."
+	}
+}
