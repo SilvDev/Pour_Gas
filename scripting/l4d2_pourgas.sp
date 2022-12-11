@@ -1,6 +1,6 @@
 /*
 *	Pour Gas
-*	Copyright (C) 2021 Silvers
+*	Copyright (C) 2022 Silvers
 *
 *	This program is free software: you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 
 
-#define PLUGIN_VERSION 		"1.14"
+#define PLUGIN_VERSION 		"1.15"
 
 /*======================================================================================
 	Plugin Info:
@@ -31,6 +31,9 @@
 
 ========================================================================================
 	Change Log:
+
+1.15 (11-Dec-2022)
+	- Changes to fix compile warnings on SourceMod 1.11.
 
 1.14 (28-Sep-2021)
 	- Added a warning when the translation files are missing.
@@ -378,17 +381,17 @@ public void OnConfigsExecuted()
 	IsAllowed();
 }
 
-public void ConVarChanged_Allow(Handle convar, const char[] oldValue, const char[] newValue)
+void ConVarChanged_Allow(Handle convar, const char[] oldValue, const char[] newValue)
 {
 	IsAllowed();
 }
 
-public void ConVarChanged_Inferno(Handle convar, const char[] oldValue, const char[] newValue)
+void ConVarChanged_Inferno(Handle convar, const char[] oldValue, const char[] newValue)
 {
 	if( !g_bBlockSound ) g_iCvarInferno = g_hCvarInferno.IntValue;
 }
 
-public void ConVarChanged_Cvars(Handle convar, const char[] oldValue, const char[] newValue)
+void ConVarChanged_Cvars(Handle convar, const char[] oldValue, const char[] newValue)
 {
 	GetCvars();
 }
@@ -521,7 +524,7 @@ bool IsAllowedGameMode()
 	return true;
 }
 
-public void OnGamemode(const char[] output, int caller, int activator, float delay)
+void OnGamemode(const char[] output, int caller, int activator, float delay)
 {
 	if( strcmp(output, "OnCoop") == 0 )
 		g_iCurrentMode = 1;
@@ -538,7 +541,7 @@ public void OnGamemode(const char[] output, int caller, int activator, float del
 // ====================================================================================================
 //					EVENTS - Pickup gascan / Hints
 // ====================================================================================================
-public void Event_GascanPickup(Event event, const char[] name, bool dontBroadcast)
+void Event_GascanPickup(Event event, const char[] name, bool dontBroadcast)
 {
 	char sTemp[8];
 	event.GetString("item", sTemp, sizeof(sTemp));
@@ -593,7 +596,7 @@ void HintMessages(int client)
 // ====================================================================================================
 //					PRETHINK - Holding gascan / pouring
 // ====================================================================================================
-public void OnPreThink(int client)
+void OnPreThink(int client)
 {
 	if( g_hTimeout[client] == null )
 	{
@@ -755,7 +758,7 @@ void StartPouring(int client)
 // ====================================================================================================
 //					EFFECTS - POURING FINISHED
 // ====================================================================================================
-public void OnUseCancelled(const char[] output, int entity, int activator, float delay)
+void OnUseCancelled(const char[] output, int entity, int activator, float delay)
 {
 	int client = GetEntProp(entity, Prop_Data, "m_iHammerID");
 	g_iRefuel[client][1] = 0;
@@ -766,12 +769,12 @@ public void OnUseCancelled(const char[] output, int entity, int activator, float
 	RemoveEntity(entity);
 }
 
-public Action WeaponCanSwitchTo(int client, int weapon)
+Action WeaponCanSwitchTo(int client, int weapon)
 {
 	return Plugin_Handled;
 }
 
-public void OnUseFinished(const char[] output, int entity, int activator, float delay)
+void OnUseFinished(const char[] output, int entity, int activator, float delay)
 {
 	int client = GetEntProp(entity, Prop_Data, "m_iHammerID");
 	g_iRefuel[client][0] = 0;
@@ -873,7 +876,7 @@ public void OnUseFinished(const char[] output, int entity, int activator, float 
 	g_hTimeout[client] = CreateTimer(g_fCvarTimeout, TimerBlock, GetClientUserId(client));
 }
 
-public Action TimerBlock(Handle timer, any client)
+Action TimerBlock(Handle timer, any client)
 {
 	client = GetClientOfUserId(client);
 	if( client )
@@ -881,6 +884,8 @@ public Action TimerBlock(Handle timer, any client)
 		g_iBlocked[client] = 0;
 		g_hTimeout[client] = null;
 	}
+
+	return Plugin_Continue;
 }
 
 public void OnClientDisconnect(int client)
@@ -888,7 +893,7 @@ public void OnClientDisconnect(int client)
 	delete g_hTimeout[client];
 }
 
-public Action OnTakeDamageDynamic(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+Action OnTakeDamageDynamic(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if( damagetype & DMG_BURN || damagetype & DMG_BULLET || damagetype & DMG_BLAST )
 	{
@@ -906,9 +911,11 @@ public Action OnTakeDamageDynamic(int victim, int &attacker, int &inflictor, flo
 		HookSingleEntityOutput(victim, "OnUser3", OnUser3);
 		SetEntProp(victim, Prop_Data, "m_iHammerID", GetEntProp(victim, Prop_Data, "m_iHammerID"));
 	}
+
+	return Plugin_Continue;
 }
 
-public void OnUser3(const char[] output, int caller, int activator, float delay)
+void OnUser3(const char[] output, int caller, int activator, float delay)
 {
 	int victim = caller;
 	float vPos[3];
@@ -1124,7 +1131,7 @@ void CreatePuddle(int client, bool delay = false)
 	}
 }
 
-public void OnUserOil(const char[] output, int caller, int activator, float delay)
+void OnUserOil(const char[] output, int caller, int activator, float delay)
 {
 	int index = -1;
 	int entref = EntIndexToEntRef(caller);
@@ -1150,22 +1157,24 @@ public void OnUserOil(const char[] output, int caller, int activator, float dela
 	}
 }
 
-public Action TimerBlood(Handle timer, any entity)
+Action TimerBlood(Handle timer, any entity)
 {
 	if( (entity = EntRefToEntIndex(entity)) != INVALID_ENT_REFERENCE && IsValidEntity(entity) )
 	{
 		AcceptEntityInput(entity, "Start");
 	}
+
+	return Plugin_Continue;
 }
 
-public bool TraceFilter(int entity, int contentsMask)
+bool TraceFilter(int entity, int contentsMask)
 {
 	if( entity <= MaxClients || !IsValidEntity(entity) || GetEntProp(entity, Prop_Data, "m_iHammerID") == 9109382 )
 		return false;
 	return true;
 }
 
-public Action OnTakeDamagePhysics(int entity, int &attacker, int &inflictor, float &damage, int &damagetype)
+Action OnTakeDamagePhysics(int entity, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if( damagetype & DMG_BURN )
 	{
@@ -1193,7 +1202,7 @@ public void OnClientPutInServer(int client)
 		SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
 }
 
-public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if( g_iCvarHold == 0 )
 	{
@@ -1330,12 +1339,12 @@ void CreateFires(int target, int client, bool delay)
 	RemoveEntity(target);
 }
 
-public Action OnTransmitExplosive(int entity, int client)
+Action OnTransmitExplosive(int entity, int client)
 {
 	return Plugin_Handled;
 }
 
-public void OnBreakPhysics(const char[] output, int caller, int activator, float delay)
+void OnBreakPhysics(const char[] output, int caller, int activator, float delay)
 {
 	g_bBlockSound = true;
 	g_hCvarInferno.IntValue = g_iCvarBurn < 1 ? 99999 : g_iCvarBurn;
@@ -1360,13 +1369,13 @@ public void OnEntityCreated(int entity, const char[] classname)
 	}
 }
 
-public void OnPostThink(int entity)
+void OnPostThink(int entity)
 {
 	SetEntProp(entity, Prop_Send, "m_fireXDelta", 1, 4, 0);
 	SetEntProp(entity, Prop_Send, "m_fireCount", 1);
 }
 
-public Action TimerFire(Handle timer, any target)
+Action TimerFire(Handle timer, any target)
 {
 	if( EntRefToEntIndex(target) != INVALID_ENT_REFERENCE )
 	{
@@ -1414,9 +1423,11 @@ public Action TimerFire(Handle timer, any target)
 			AcceptEntityInput(entity, "SetParent", target);
 		}
 	}
+
+	return Plugin_Continue;
 }
 
-public Action SoundHook(int clients[64], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags)
+Action SoundHook(int clients[64], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags)
 {
 	if( g_bBlockSound && sample[0] == 'w' && sample[8] == 'm' )
 	{
