@@ -26,7 +26,7 @@
 *	Name	:	[L4D2] Pour Gas
 *	Author	:	SilverShot
 *	Descrp	:	Players can pour gascans onto the ground, which can be ignited.
-*	Link	:	https://forums.alliedmods.net/showthread.php?t=187567
+*	Link	:	https://forums.alliedmods.net/showthread.php?t=187568
 *	Plugins	:	https://sourcemod.net/plugins.php?exact=exact&sortby=title&search=1&author=Silvers
 
 ========================================================================================
